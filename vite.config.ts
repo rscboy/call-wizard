@@ -9,7 +9,6 @@ export default defineConfig(({mode}) => {
     base: process.env.NODE_ENV === 'production' ? '/callwizard/' : '/',
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
     resolve: {
       alias: {
