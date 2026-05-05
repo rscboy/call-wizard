@@ -20,22 +20,6 @@ async function testConnection() {
 }
 testConnection();
 
-
-function canUseSessionStorage() {
-  try {
-    const testKey = '__cw_splash_test__';
-    sessionStorage.setItem(testKey, '1');
-    sessionStorage.removeItem(testKey);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function getInitialSplashState() {
-  if (!canUseSessionStorage()) return false;
-  return !sessionStorage.getItem('hasSeenSplash');
-}
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -171,15 +155,16 @@ const PortalLayout = () => {
 };
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(getInitialSplashState);
+  const [showSplash, setShowSplash] = useState(() => {
+    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
+    return !hasSeenSplash;
+  });
 
   useEffect(() => {
     if (showSplash) {
       const timer = setTimeout(() => {
         setShowSplash(false);
-        if (canUseSessionStorage()) {
-          sessionStorage.setItem('hasSeenSplash', 'true');
-        }
+        sessionStorage.setItem('hasSeenSplash', 'true');
       }, 1200);
       return () => clearTimeout(timer);
     }
