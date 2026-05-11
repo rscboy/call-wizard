@@ -31,6 +31,24 @@ function ScrollToTop() {
 }
 
 // STUBS
+const getHasSeenSplash = () => {
+  try {
+    return window.sessionStorage.getItem('hasSeenSplash') === 'true';
+  } catch {
+    return false;
+  }
+};
+
+const setHasSeenSplash = () => {
+  try {
+    window.sessionStorage.setItem('hasSeenSplash', 'true');
+  } catch {
+    // Storage may be unavailable in some mobile/private browsing contexts.
+  }
+};
+
+const isActiveRoute = (pathname: string, path: string) => pathname === path;
+
 const MarketingLayout = () => {
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -48,19 +66,19 @@ const MarketingLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafb] overflow-x-hidden pt-[72px]">
       <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 h-[72px] flex justify-between items-center bg-[#f8fafb] border-none shadow-sm">
-        <div className="flex-1 flex justify-start items-center">
-          <Link to="/" className="text-xl font-serif font-medium tracking-tight text-slate-900">
+        <div className="flex-1 min-w-0 flex justify-start items-center">
+          <Link to="/" className="truncate text-xl font-serif font-medium tracking-tight text-slate-900">
             Call Wizard™
           </Link>
         </div>
         
         <nav className="hidden md:flex flex-1 justify-center gap-8" aria-label="Primary navigation">
           {marketingNavItems.map((item) => (
-            <Link key={item.path} to={item.path} className={`text-sm font-medium pb-1 ${location.pathname === item.path ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>{item.name}</Link>
+            <Link key={item.path} to={item.path} className={`text-sm font-medium pb-1 ${isActiveRoute(location.pathname, item.path) ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>{item.name}</Link>
           ))}
         </nav>
 
-        <div className="flex-1 flex justify-end items-center gap-2 md:gap-4">
+        <div className="flex-1 shrink-0 flex justify-end items-center gap-2 md:gap-4">
           <Link to="/login" className="hidden sm:inline-flex items-center justify-center px-6 py-2 bg-transparent border border-slate-300 text-slate-800 text-sm font-medium hover:bg-slate-50 transition-all rounded-sm md:w-auto">
             Client Login
           </Link>
@@ -76,34 +94,28 @@ const MarketingLayout = () => {
           </button>
         </div>
 
-        <AnimatePresence>
-          {isMobileNavOpen && (
-            <motion.nav
-              id="mobile-marketing-nav"
-              aria-label="Mobile primary navigation"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
-              className="absolute left-4 right-4 top-[82px] md:hidden rounded-2xl border-2 border-slate-900 bg-white p-3 shadow-[6px_6px_0_0_rgba(15,23,42,1)]"
-            >
-              <div className="grid gap-2">
-                {marketingNavItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`rounded-xl px-4 py-3 text-sm font-bold transition-colors ${location.pathname === item.path ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-                <Link to="/login" className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-900 sm:hidden">
-                  Client Login
+        {isMobileNavOpen && (
+          <nav
+            id="mobile-marketing-nav"
+            aria-label="Mobile primary navigation"
+            className="fixed left-4 right-4 top-[82px] z-[60] md:hidden rounded-2xl border-2 border-slate-900 bg-white p-3 shadow-[6px_6px_0_0_rgba(15,23,42,1)]"
+          >
+            <div className="grid gap-2">
+              {marketingNavItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`rounded-xl px-4 py-3 text-sm font-bold transition-colors ${isActiveRoute(location.pathname, item.path) ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
+                >
+                  {item.name}
                 </Link>
-              </div>
-            </motion.nav>
-          )}
-        </AnimatePresence>
+              ))}
+              <Link to="/login" className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-900 sm:hidden">
+                Client Login
+              </Link>
+            </div>
+          </nav>
+        )}
       </header>
       <main className="flex-grow w-full">
         <Outlet />
@@ -132,6 +144,7 @@ const PortalLayout = () => {
   const navItems = [
     { name: 'Dashboard', path: '/app' },
     { name: 'All Call Reports', path: '/app/reports' },
+    { name: 'Pending Reports', path: '/app/reports/pending' },
     { name: 'Show Sales Rep List', path: '/app/reps' },
     { name: 'Show Customer List', path: '/app/customers' },
     { name: 'Show Manufacturer List', path: '/app/manufacturers' },
@@ -142,9 +155,9 @@ const PortalLayout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white overflow-hidden">
-      <header className="border-b-2 border-slate-900 px-4 md:px-8 py-4 flex justify-between items-center bg-white z-10">
-        <div className="flex items-center gap-8 min-w-0">
+    <div className="flex min-h-screen min-h-[100dvh] flex-col bg-white overflow-hidden">
+      <header className="sticky top-0 z-50 flex items-center justify-between border-b-2 border-slate-900 bg-white px-4 py-4 md:px-8">
+        <div className="flex min-w-0 items-center gap-3 md:gap-8">
           <div className="flex flex-col min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Quantos Software LLC</span>
             <h1 className="text-xl md:text-2xl font-serif font-black italic tracking-tight truncate">DIRT <span className="hidden sm:inline text-sm font-sans font-normal not-italic ml-2 opacity-60">— DRG Information Reporting Tool</span></h1>
@@ -154,7 +167,7 @@ const PortalLayout = () => {
             <Link to="/" className="text-[11px] tracking-widest font-black uppercase text-slate-400 hover:text-slate-900 transition-colors">Call Wizard™ Info</Link>
           </nav>
         </div>
-        <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex shrink-0 items-center gap-3 md:gap-6">
           <div className="hidden sm:block text-right">
             <p className="text-xs font-black">Welcome, Admin</p>
             <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 mt-0.5">System Administrator | DRG</p>
@@ -173,47 +186,41 @@ const PortalLayout = () => {
         </div>
       </header>
       
-      <AnimatePresence>
-        {isPortalNavOpen && (
-          <motion.nav
-            id="mobile-portal-nav"
-            aria-label="Mobile portal navigation"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18 }}
-            className="lg:hidden border-b-2 border-slate-900 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.12)]"
-          >
-            <div className="grid gap-2">
-              {navItems.map((item) => {
-                const active = location.pathname === item.path || (item.path !== '/app' && location.pathname.startsWith(item.path));
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 border-2 px-4 py-3 text-[11px] font-black uppercase tracking-widest ${active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
-                  >
-                    {active ? <span className="h-2 w-2 bg-blue-300" aria-hidden="true" /> : <span className="h-2 w-2 border border-slate-400" aria-hidden="true" />}
-                    {item.name}
-                  </Link>
-                );
-              })}
-              <Link to="/" className="border-2 border-slate-200 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-700 sm:hidden">
-                Logout
-              </Link>
-            </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+      {isPortalNavOpen && (
+        <nav
+          id="mobile-portal-nav"
+          aria-label="Mobile portal navigation"
+          className="relative z-40 max-h-[calc(100dvh-76px)] overflow-y-auto border-b-2 border-slate-900 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.12)] lg:hidden"
+        >
+          <div className="grid gap-2">
+            {navItems.map((item) => {
+              const active = isActiveRoute(location.pathname, item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center gap-3 border-2 px-4 py-3 text-[11px] font-black uppercase tracking-widest ${active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                >
+                  {active ? <span className="h-2 w-2 bg-blue-300" aria-hidden="true" /> : <span className="h-2 w-2 border border-slate-400" aria-hidden="true" />}
+                  {item.name}
+                </Link>
+              );
+            })}
+            <Link to="/" className="border-2 border-slate-200 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-700 sm:hidden">
+              Logout
+            </Link>
+          </div>
+        </nav>
+      )}
 
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="hidden lg:flex w-64 border-r-2 border-slate-900 p-8 flex-col justify-between overflow-y-auto bg-white">
           <div className="space-y-12">
             <section>
               <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 mb-6 border-b-2 border-slate-100 pb-2">Main Menu</h2>
               <ul className="space-y-5">
                 {navItems.map((item) => {
-                  const active = location.pathname === item.path || (item.path !== '/app' && location.pathname.startsWith(item.path));
+                  const active = isActiveRoute(location.pathname, item.path);
                   return (
                     <li key={item.path}>
                       <Link
@@ -243,7 +250,7 @@ const PortalLayout = () => {
           </div>
         </aside>
         
-        <section className="flex-1 p-5 md:p-12 bg-slate-50 overflow-y-auto">
+        <section className="min-w-0 flex-1 overflow-y-auto bg-slate-50 p-5 md:p-12">
           <Outlet />
         </section>
       </main>
@@ -252,16 +259,13 @@ const PortalLayout = () => {
 };
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(() => {
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
-    return !hasSeenSplash;
-  });
+  const [showSplash, setShowSplash] = useState(() => !getHasSeenSplash());
 
   useEffect(() => {
     if (showSplash) {
       const timer = setTimeout(() => {
         setShowSplash(false);
-        sessionStorage.setItem('hasSeenSplash', 'true');
+        setHasSeenSplash();
       }, 1200);
       return () => clearTimeout(timer);
     }
