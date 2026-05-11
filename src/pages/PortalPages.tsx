@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { mockReports, mockCustomers, mockManufacturers, mockSalesReps } from '../data/mockData';
 import { format } from 'date-fns';
-import { CheckCircle2, ChevronRight, FileText, Search, PlusCircle, Building2, Truck, Users, Download as DownloadIcon, Send } from 'lucide-react';
+import { CheckCircle2, ChevronRight, FileText, Search, PlusCircle, Building2, Truck, Download as DownloadIcon, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Dashboard = () => {
@@ -45,6 +45,118 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+
+const digestOpportunities = [
+  {
+    product: 'Heavy-Duty Pumps',
+    type: 'Replacement Opportunity',
+    account: 'ABC Manufacturing',
+    location: 'ABC - Main Plant',
+    summary: 'Three Apex Industrial heavy-duty pumps are in poor condition. Maintenance indicated they want to replace these units within the next 6 months.',
+    urgency: 'HIGH',
+    value: '$90K',
+  },
+  {
+    product: 'Heavy-Duty Pumps',
+    type: 'Replacement Opportunity',
+    account: 'ABC Manufacturing',
+    location: 'ABC - Main Plant',
+    summary: 'Three aging Apex heavy-duty pumps on-site; customer plans replacement in 6-9 months.',
+    urgency: 'HIGH',
+    value: '$75K',
+  },
+];
+
+const DigestSection = ({ title, count, children }: { title: string; count?: number; children: ReactNode }) => (
+  <section className="px-9 py-7">
+    <div className="mb-4 border-b-[3px] border-[#111827] pb-3 text-[15px] font-black uppercase tracking-[0.32em] text-slate-600">
+      {title}{typeof count === 'number' ? ` · ${count}` : ''}
+    </div>
+    {children}
+  </section>
+);
+
+const ManufacturerDigestPreview = ({ compact = false }: { compact?: boolean }) => (
+  <div className={`mx-auto bg-white text-[#111827] shadow-[0_18px_70px_rgba(15,23,42,0.12)] ${compact ? 'max-w-4xl' : 'max-w-5xl'}`}>
+    <header className="border-b-[6px] border-[#f45105] bg-[#10162b] px-9 py-8 text-white">
+      <p className="mb-2 text-[13px] font-black uppercase tracking-[0.38em] text-white/55">Call Wizard · Field Digest</p>
+      <h2 className="text-4xl font-black tracking-tight text-black">Apex Industrial</h2>
+      <p className="mt-4 text-lg font-medium text-white/85">Field intelligence captured this week.</p>
+    </header>
+
+    <div className="grid grid-cols-3 border-b border-slate-200">
+      <div className="border-r border-slate-200 px-7 py-7">
+        <p className="mb-2 text-[13px] font-black uppercase tracking-[0.32em] text-slate-600">Opp. Value</p>
+        <p className="text-4xl font-black text-[#e94b0a]">$165K</p>
+        <p className="mt-1 text-base font-medium text-slate-500">2 new opps</p>
+      </div>
+      <div className="border-r border-slate-200 px-7 py-7">
+        <p className="mb-2 text-[13px] font-black uppercase tracking-[0.32em] text-slate-600">Issues</p>
+        <p className="text-4xl font-black text-[#111827]">0</p>
+        <p className="mt-1 text-base font-medium text-slate-500">Product feedback</p>
+      </div>
+      <div className="px-7 py-7">
+        <p className="mb-2 text-[13px] font-black uppercase tracking-[0.32em] text-slate-600">Competitors</p>
+        <p className="text-4xl font-black text-[#111827]">0</p>
+        <p className="mt-1 text-base font-medium text-slate-500">Sightings</p>
+      </div>
+    </div>
+
+    <DigestSection title="Top Opportunities" count={2}>
+      <div className="border border-slate-200 bg-white">
+        {digestOpportunities.map((item, index) => (
+          <article key={`${item.product}-${item.value}`} className={`grid grid-cols-[1fr_auto] gap-6 px-7 py-6 ${index > 0 ? 'border-t border-slate-200' : ''}`}>
+            <div>
+              <h3 className="text-xl font-bold text-[#111827]">
+                {item.product} <span className="font-black">·</span> <span className="font-medium text-slate-600">{item.type}</span>
+              </h3>
+              <p className="mt-1 text-base font-medium text-slate-500">{item.account} · {item.location}</p>
+              <p className="mt-5 max-w-3xl text-lg leading-relaxed text-[#1f2937]">{item.summary}</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="bg-[#f45105] px-4 py-2 text-sm font-black uppercase tracking-[0.16em] text-white">{item.urgency}</span>
+              <span className="border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-[#111827]">{item.value}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </DigestSection>
+
+    <DigestSection title="Product Issues" count={0}>
+      <p className="text-lg italic text-slate-400">No product issues this week.</p>
+    </DigestSection>
+
+    <DigestSection title="Competitor Sightings" count={0}>
+      <p className="text-lg italic text-slate-400">No competitor activity logged this week.</p>
+    </DigestSection>
+
+    <DigestSection title="See Your Entire Picture">
+      <div className="border-l-[6px] border-[#f45105] bg-[#10162b] px-9 py-9 text-white">
+        <h3 className="text-3xl font-black leading-tight">
+          You're seeing <span className="text-[#f45105]">one rep firm's view</span> of Apex Industrial.
+        </h3>
+        <p className="mt-6 max-w-4xl text-xl leading-relaxed text-white/75">
+          Your other rep agencies aren't reporting through Call Wizard yet — so this digest covers only one slice of your national footprint. Invite your other rep firms to onboard and you'll get a <strong className="text-white">single, unified field intelligence feed</strong> across every territory you cover.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <button className="bg-[#f45105] px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-white">Refer a Rep Firm →</button>
+          <button className="border border-white/30 px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-white">Learn More</button>
+        </div>
+        <p className="mt-8 text-sm font-semibold tracking-wide text-white/45">☑ FREE for manufacturers · ☑ Each rep firm onboarded multiplies your visibility · ☑ All data still scoped to Apex Industrial</p>
+      </div>
+    </DigestSection>
+
+    <div className="border-t border-slate-200 bg-slate-50 px-9 py-10 text-center">
+      <button className="bg-[#f45105] px-14 py-5 text-base font-black uppercase tracking-[0.18em] text-white">Open Portal →</button>
+      <p className="mt-6 text-sm font-black uppercase tracking-[0.12em] text-slate-400">Total observations this period: 2</p>
+    </div>
+
+    <footer className="bg-[#10162b] px-9 py-7 text-sm leading-relaxed text-white/55">
+      You received this because you have an authorized Call Wizard manufacturer portal account. Only approved, manufacturer-visible field intelligence is included. Internal rep firm notes are never shared.
+    </footer>
+  </div>
+);
 
 export const CallReports = () => {
   const [tab, setTab] = useState<'UNVALIDATED' | 'VALIDATED'>('UNVALIDATED');
@@ -234,34 +346,25 @@ export const RepsList = () => {
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-end mb-8 border-b-2 border-slate-900 pb-4">
         <div>
-          <h1 className="text-4xl font-serif font-black text-slate-900">Sales Rep Roster</h1>
-          <p className="text-sm font-medium text-slate-500 mt-2 hover:text-slate-900 transition-colors">Manage field representation profiles.</p>
+          <h1 className="text-4xl font-serif font-black text-slate-900">Sandbox Rep View</h1>
+          <p className="text-sm font-medium text-slate-500 mt-2 hover:text-slate-900 transition-colors">Preview exactly what a manufacturer sees from one reporting rep firm.</p>
         </div>
         <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-          <PlusCircle className="w-4 h-4" /> Add User
+          <Send className="w-4 h-4" /> Send Sample
         </button>
       </div>
-      
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+      <div className="mb-8 grid gap-4 md:grid-cols-3">
         {mockSalesReps.map(rep => (
-          <div key={rep.id} className="border-2 border-slate-900 p-8 bg-white shadow-[8px_8px_0_0_rgba(15,23,42,1)] flex flex-col items-center text-center">
-            <div className="w-16 h-16 border-2 border-slate-900 rounded-none flex items-center justify-center text-slate-900 mb-6 relative overflow-hidden">
-                <Users className="w-8 h-8" />
-            </div>
-            <h3 className="font-serif font-black text-2xl text-slate-900 mb-2">{rep.name}</h3>
-            <p className="text-[10px] font-black tracking-[0.2em] uppercase text-blue-800 mb-6">{rep.territories.join(' / ')}</p>
-            <div className="w-full flex justify-between border-t-2 border-slate-100 pt-6 mt-auto">
-              <div className="text-left">
-                <div className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Status</div>
-                <div className={`text-[10px] font-black tracking-widest uppercase ${rep.status === 'ACTIVE' ? 'text-slate-900' : 'text-slate-400'}`}>{rep.status}</div>
-              </div>
-              <div className="text-right flex items-end">
-                <button className="text-[10px] font-black hover:text-blue-800 text-slate-900 uppercase tracking-widest">Edit Profile</button>
-              </div>
-            </div>
+          <div key={rep.id} className="border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Rep Firm User</p>
+            <h3 className="mt-2 text-lg font-black text-slate-900">{rep.name}</h3>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-blue-800">{rep.territories.join(' / ')}</p>
           </div>
         ))}
       </div>
+
+      <ManufacturerDigestPreview />
     </div>
   );
 };
@@ -296,7 +399,7 @@ export const PendingReports = () => {
             </button>
           </div>
           
-          <div className="border-2 border-slate-900 overflow-hidden bg-white shadow-[8px_8px_0_0_rgba(15,23,42,1)]">
+          <div className="mb-10 border-2 border-slate-900 overflow-hidden bg-white shadow-[8px_8px_0_0_rgba(15,23,42,1)]">
             <table className="w-full text-left text-sm border-collapse">
               <thead className="bg-slate-900 text-white uppercase text-[10px] tracking-widest font-black">
                 <tr>
@@ -331,6 +434,12 @@ export const PendingReports = () => {
               </tbody>
             </table>
           </div>
+
+          <div className="mb-4 border-b-2 border-slate-900 pb-3">
+            <h2 className="text-2xl font-serif font-black text-slate-900">Email Report Preview</h2>
+            <p className="mt-1 text-sm font-medium text-slate-500">The outbound manufacturer digest uses the same one-rep-firm field intelligence layout.</p>
+          </div>
+          <ManufacturerDigestPreview compact />
         </>
       )}
     </div>
