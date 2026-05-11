@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Outlet, Link, useLocation } from 'react-router-dom';
 import { cn } from './lib/utils';
-import { ShieldAlert, LogIn, LineChart, FileText, Users, Building, Truck, Send } from 'lucide-react';
+import { ShieldAlert, LogIn, LineChart, FileText, Users, Building, Truck, Send, Menu, X } from 'lucide-react';
 import { Overview, Benefits, Download, Pricing, Demo } from './pages/MarketingPages';
 import { Dashboard, CallReports, CustomersList, ManufacturersList, RepsList, PendingReports } from './pages/PortalPages';
 import { ClientLogin, Privacy, Terms } from './pages/UtilityPages';
@@ -33,28 +33,77 @@ function ScrollToTop() {
 // STUBS
 const MarketingLayout = () => {
   const location = useLocation();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const marketingNavItems = [
+    { name: 'Overview', path: '/' },
+    { name: 'Benefits', path: '/benefits' },
+    { name: 'Pricing', path: '/pricing' },
+    { name: 'Download', path: '/download' },
+  ];
+
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafb] overflow-x-hidden pt-[72px]">
-      <header className="fixed top-0 left-0 right-0 z-50 px-8 h-[72px] flex justify-between items-center bg-[#f8fafb] border-none shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 h-[72px] flex justify-between items-center bg-[#f8fafb] border-none shadow-sm">
         <div className="flex-1 flex justify-start items-center">
           <Link to="/" className="text-xl font-serif font-medium tracking-tight text-slate-900">
             Call Wizard™
           </Link>
         </div>
         
-        <nav className="hidden md:flex flex-1 justify-center gap-8">
-          <Link to="/" className={`text-sm font-medium pb-1 ${location.pathname === '/' ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>Overview</Link>
-          <Link to="/benefits" className={`text-sm font-medium pb-1 ${location.pathname === '/benefits' ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>Benefits</Link>
-          <Link to="/pricing" className={`text-sm font-medium pb-1 ${location.pathname === '/pricing' ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>Pricing</Link>
-          <Link to="/download" className={`text-sm font-medium pb-1 ${location.pathname === '/download' ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>Download</Link>
+        <nav className="hidden md:flex flex-1 justify-center gap-8" aria-label="Primary navigation">
+          {marketingNavItems.map((item) => (
+            <Link key={item.path} to={item.path} className={`text-sm font-medium pb-1 ${location.pathname === item.path ? 'text-slate-900 border-b border-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>{item.name}</Link>
+          ))}
         </nav>
 
-        <div className="flex-1 flex justify-end">
-          <Link to="/login" className="inline-flex items-center justify-center px-6 py-2 bg-transparent border border-slate-300 text-slate-800 text-sm font-medium hover:bg-slate-50 transition-all rounded-sm md:w-auto">
+        <div className="flex-1 flex justify-end items-center gap-2 md:gap-4">
+          <Link to="/login" className="hidden sm:inline-flex items-center justify-center px-6 py-2 bg-transparent border border-slate-300 text-slate-800 text-sm font-medium hover:bg-slate-50 transition-all rounded-sm md:w-auto">
             Client Login
           </Link>
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center gap-2 rounded-full border-2 border-slate-900 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-900 shadow-[3px_3px_0_0_rgba(15,23,42,1)] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            aria-controls="mobile-marketing-nav"
+            aria-expanded={isMobileNavOpen}
+            onClick={() => setIsMobileNavOpen((open) => !open)}
+          >
+            {isMobileNavOpen ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
+            Menu
+          </button>
         </div>
+
+        <AnimatePresence>
+          {isMobileNavOpen && (
+            <motion.nav
+              id="mobile-marketing-nav"
+              aria-label="Mobile primary navigation"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="absolute left-4 right-4 top-[82px] md:hidden rounded-2xl border-2 border-slate-900 bg-white p-3 shadow-[6px_6px_0_0_rgba(15,23,42,1)]"
+            >
+              <div className="grid gap-2">
+                {marketingNavItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`rounded-xl px-4 py-3 text-sm font-bold transition-colors ${location.pathname === item.path ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+                <Link to="/login" className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-900 sm:hidden">
+                  Client Login
+                </Link>
+              </div>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </header>
       <main className="flex-grow w-full">
         <Outlet />
@@ -79,6 +128,7 @@ const MarketingLayout = () => {
 
 const PortalLayout = () => {
   const location = useLocation();
+  const [isPortalNavOpen, setIsPortalNavOpen] = useState(false);
   const navItems = [
     { name: 'Dashboard', path: '/app' },
     { name: 'All Call Reports', path: '/app/reports' },
@@ -87,30 +137,77 @@ const PortalLayout = () => {
     { name: 'Show Manufacturer List', path: '/app/manufacturers' },
   ];
 
+  useEffect(() => {
+    setIsPortalNavOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-hidden">
-      <header className="border-b-2 border-slate-900 px-8 py-4 flex justify-between items-center bg-white z-10">
-        <div className="flex items-center gap-8">
-          <div className="flex flex-col">
+      <header className="border-b-2 border-slate-900 px-4 md:px-8 py-4 flex justify-between items-center bg-white z-10">
+        <div className="flex items-center gap-8 min-w-0">
+          <div className="flex flex-col min-w-0">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Quantos Software LLC</span>
-            <h1 className="text-2xl font-serif font-black italic tracking-tight">DIRT <span className="text-sm font-sans font-normal not-italic ml-2 opacity-60">— DRG Information Reporting Tool</span></h1>
+            <h1 className="text-xl md:text-2xl font-serif font-black italic tracking-tight truncate">DIRT <span className="hidden sm:inline text-sm font-sans font-normal not-italic ml-2 opacity-60">— DRG Information Reporting Tool</span></h1>
           </div>
-          <nav className="flex gap-6 ml-12">
+          <nav className="hidden lg:flex gap-6 ml-12" aria-label="Portal top navigation">
             <Link to="/app" className="text-[11px] tracking-widest font-black uppercase text-slate-900 border-b-2 border-slate-900 pb-1">Operational Portal</Link>
             <Link to="/" className="text-[11px] tracking-widest font-black uppercase text-slate-400 hover:text-slate-900 transition-colors">Call Wizard™ Info</Link>
           </nav>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right">
+        <div className="flex items-center gap-3 md:gap-6">
+          <div className="hidden sm:block text-right">
             <p className="text-xs font-black">Welcome, Admin</p>
             <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 mt-0.5">System Administrator | DRG</p>
           </div>
-          <Link to="/" className="px-4 py-2 border border-slate-200 hover:border-slate-900 text-[10px] tracking-widest font-black uppercase transition-all">Logout</Link>
+          <button
+            type="button"
+            className="lg:hidden inline-flex items-center gap-2 border-2 border-slate-900 bg-white px-4 py-2 text-[10px] tracking-widest font-black uppercase shadow-[3px_3px_0_0_rgba(15,23,42,1)] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+            aria-controls="mobile-portal-nav"
+            aria-expanded={isPortalNavOpen}
+            onClick={() => setIsPortalNavOpen((open) => !open)}
+          >
+            {isPortalNavOpen ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
+            Menu
+          </button>
+          <Link to="/" className="hidden sm:inline-flex px-4 py-2 border border-slate-200 hover:border-slate-900 text-[10px] tracking-widest font-black uppercase transition-all">Logout</Link>
         </div>
       </header>
       
+      <AnimatePresence>
+        {isPortalNavOpen && (
+          <motion.nav
+            id="mobile-portal-nav"
+            aria-label="Mobile portal navigation"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+            className="lg:hidden border-b-2 border-slate-900 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.12)]"
+          >
+            <div className="grid gap-2">
+              {navItems.map((item) => {
+                const active = location.pathname === item.path || (item.path !== '/app' && location.pathname.startsWith(item.path));
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 border-2 px-4 py-3 text-[11px] font-black uppercase tracking-widest ${active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-700'}`}
+                  >
+                    {active ? <span className="h-2 w-2 bg-blue-300" aria-hidden="true" /> : <span className="h-2 w-2 border border-slate-400" aria-hidden="true" />}
+                    {item.name}
+                  </Link>
+                );
+              })}
+              <Link to="/" className="border-2 border-slate-200 px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-700 sm:hidden">
+                Logout
+              </Link>
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+
       <main className="flex-1 flex overflow-hidden">
-        <aside className="w-64 border-r-2 border-slate-900 p-8 flex flex-col justify-between overflow-y-auto bg-white">
+        <aside className="hidden lg:flex w-64 border-r-2 border-slate-900 p-8 flex-col justify-between overflow-y-auto bg-white">
           <div className="space-y-12">
             <section>
               <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 mb-6 border-b-2 border-slate-100 pb-2">Main Menu</h2>
@@ -146,7 +243,7 @@ const PortalLayout = () => {
           </div>
         </aside>
         
-        <section className="flex-1 p-12 bg-slate-50 overflow-y-auto">
+        <section className="flex-1 p-5 md:p-12 bg-slate-50 overflow-y-auto">
           <Outlet />
         </section>
       </main>
