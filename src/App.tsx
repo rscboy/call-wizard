@@ -11,6 +11,26 @@ import { motion, AnimatePresence } from 'motion/react';
 import { canAccessPortalRoute, defaultPortalRoute, getDemoUser, roleLabel, signOutDemoUser } from './lib/demoAuth';
 import type { DemoUser } from './lib/demoAuth';
 
+const sessionStorageFallback = new Map<string, string>();
+
+const safeSessionStorage = {
+  getItem(key: string) {
+    try {
+      return window.sessionStorage.getItem(key) ?? sessionStorageFallback.get(key) ?? null;
+    } catch {
+      return sessionStorageFallback.get(key) ?? null;
+    }
+  },
+  setItem(key: string, value: string) {
+    sessionStorageFallback.set(key, value);
+    try {
+      window.sessionStorage.setItem(key, value);
+    } catch {
+      // Storage can be unavailable in some embedded/private browser contexts.
+    }
+  },
+};
+
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
@@ -524,7 +544,7 @@ const PortalLayout = () => {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
+    const hasSeenSplash = safeSessionStorage.getItem('hasSeenSplash');
     const startsInLoggedInApp = window.location.hash.startsWith('#/app');
     const skipsSplash = new URLSearchParams(window.location.search).has('nosplash');
     return !hasSeenSplash && !startsInLoggedInApp && !skipsSplash;
@@ -534,7 +554,7 @@ export default function App() {
     if (showSplash) {
       const timer = setTimeout(() => {
         setShowSplash(false);
-        sessionStorage.setItem('hasSeenSplash', 'true');
+        safeSessionStorage.setItem('hasSeenSplash', 'true');
       }, 1200);
       return () => clearTimeout(timer);
     }

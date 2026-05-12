@@ -74,6 +74,38 @@ export const demoAccounts: DemoUser[] = [
 
 const storageKey = 'cw_demo_user';
 
+const localStorageFallback = new Map<string, string>();
+
+const safeLocalStorage = {
+  getItem(key: string) {
+    try {
+      return window.localStorage.getItem(key) ?? localStorageFallback.get(key) ?? null;
+    } catch {
+      return localStorageFallback.get(key) ?? null;
+    }
+  },
+  setItem(key: string, value: string) {
+    localStorageFallback.set(key, value);
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      // Storage can be unavailable in some embedded/private browser contexts.
+    }
+  },
+  removeItem(key: string) {
+    localStorageFallback.delete(key);
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // Storage can be unavailable in some embedded/private browser contexts.
+    }
+  },
+};
+
+const notifyDemoAuthChanged = () => {
+  window.dispatchEvent(new Event('cw-demo-auth'));
+};
+
 export const roleLabel = (role?: DemoRole) => {
   switch (role) {
     case 'SalesRep':
@@ -126,23 +158,23 @@ export const signInDemoUser = (email: string, password: string) => {
   const normalizedEmail = email.trim().toLowerCase();
   const user = demoAccounts.find((account) => account.email === normalizedEmail && account.password === password);
   if (!user) return null;
-  localStorage.setItem(storageKey, JSON.stringify(user));
-  window.dispatchEvent(new Event('cw-demo-auth'));
+  safeLocalStorage.setItem(storageKey, JSON.stringify(user));
+  notifyDemoAuthChanged();
   return user;
 };
 
 export const getDemoUser = (): DemoUser | null => {
-  const raw = localStorage.getItem(storageKey);
+  const raw = safeLocalStorage.getItem(storageKey);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as DemoUser;
   } catch {
-    localStorage.removeItem(storageKey);
+    safeLocalStorage.removeItem(storageKey);
     return null;
   }
 };
 
 export const signOutDemoUser = () => {
-  localStorage.removeItem(storageKey);
-  window.dispatchEvent(new Event('cw-demo-auth'));
+  safeLocalStorage.removeItem(storageKey);
+  notifyDemoAuthChanged();
 };
