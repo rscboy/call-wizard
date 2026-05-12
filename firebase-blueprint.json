@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application, either an admin or a sales rep.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "REP"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "territories": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["email", "name", "role", "status"]
+    },
+    "Dealer": {
+      "title": "Dealer",
+      "description": "A dealership account assigned to the agency.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "yearAdded": { "type": "number" }
+      },
+      "required": ["name", "city", "state", "status", "yearAdded"]
+    },
+    "Vendor": {
+      "title": "Vendor",
+      "description": "A manufacturer or principal vendor.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] }
+      },
+      "required": ["name", "status"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "A call report from a field rep visit.",
+      "type": "object",
+      "properties": {
+        "dealerId": { "type": "string" },
+        "repId": { "type": "string" },
+        "visitDate": { "type": "string", "format": "date-time" },
+        "preamble": { "type": "string" },
+        "status": { "type": "string", "enum": ["UNVALIDATED", "VALIDATED", "SENT"] },
+        "vendorsRelevant": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dealerId", "repId", "visitDate", "preamble", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles. Admins manage the platform, reps submit reports."
+    },
+    "/dealers/{dealerId}": {
+      "schema": { "$ref": "#/entities/Dealer" },
+      "description": "Dealership list."
+    },
+    "/vendors/{vendorId}": {
+      "schema": { "$ref": "#/entities/Vendor" },
+      "description": "Vendor principal list."
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/Report" },
+      "description": "Submitted reports from the reps."
+    }
+  }
+}

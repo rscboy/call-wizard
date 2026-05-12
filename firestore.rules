@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+
+    function isAdmin() { 
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'; 
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name', 'role', 'status']) &&
+        data.keys().size() <= 6 &&
+        data.email is string && data.email.size() > 0 && data.email.size() <= 200 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.role in ['ADMIN', 'REP'] &&
+        data.status in ['ACTIVE', 'INACTIVE'] &&
+        (!('territories' in data) || (data.territories is list && data.territories.size() <= 50)) &&
+        (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().role == 'REP' && incoming().email == request.auth.token.email;
+      allow update: if isOwner(userId) && isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'territories', 'status']) ||
+                        isAdmin() && isValidUser(incoming());
+      allow delete: if isAdmin();
+    }
+
+    function isValidDealer(data) {
+      return data.keys().hasAll(['name', 'city', 'state', 'status', 'yearAdded']) &&
+        data.keys().size() <= 6 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.city is string && data.city.size() > 0 && data.city.size() <= 100 &&
+        data.state is string && data.state.size() > 0 && data.state.size() <= 50 &&
+        data.status in ['ACTIVE', 'INACTIVE'] &&
+        data.yearAdded is number &&
+        (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    match /dealers/{dealerId} {
+      allow get: if isSignedIn() && isValidId(dealerId);
+      allow list: if isSignedIn();
+      allow create: if isAdmin() && isValidDealer(incoming());
+      allow update: if isAdmin() && isValidDealer(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'city', 'state', 'status', 'yearAdded']);
+      allow delete: if isAdmin();
+    }
+
+    function isValidVendor(data) {
+      return data.keys().hasAll(['name', 'status']) &&
+        data.keys().size() <= 3 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.status in ['ACTIVE', 'INACTIVE'] &&
+        (!('createdAt' in data) || data.createdAt is timestamp);
+    }
+
+    match /vendors/{vendorId} {
+      allow get: if isSignedIn() && isValidId(vendorId);
+      allow list: if isSignedIn();
+      allow create: if isAdmin() && isValidVendor(incoming());
+      allow update: if isAdmin() && isValidVendor(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'status']);
+      allow delete: if isAdmin();
+    }
+
+    function isValidReport(data) {
+      return data.keys().hasAll(['dealerId', 'repId', 'visitDate', 'preamble', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().size() <= 8 &&
+        isValidId(data.dealerId) &&
+        isValidId(data.repId) &&
+        data.visitDate is string && data.visitDate.size() <= 50 &&
+        data.preamble is string && data.preamble.size() <= 1000 &&
+        data.status in ['UNVALIDATED', 'VALIDATED', 'SENT'] &&
+        data.repId == request.auth.uid &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        (!('vendorsRelevant' in data) || (data.vendorsRelevant is list && data.vendorsRelevant.size() <= 20));
+    }
+
+    match /reports/{reportId} {
+      allow get: if isSignedIn() && isValidId(reportId) && (existing().repId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.repId == request.auth.uid || isAdmin());
+      
+      allow create: if isSignedIn() && 
+                    isValidReport(incoming()) && 
+                    incoming().createdAt == request.time && 
+                    incoming().updatedAt == request.time &&
+                    exists(/databases/$(database)/documents/dealers/$(incoming().dealerId));
+                    
+      allow update: if isSignedIn() && 
+                    isValidReport(incoming()) && 
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    incoming().dealerId == existing().dealerId &&
+                    incoming().repId == existing().repId &&
+                    (
+                      (existing().repId == request.auth.uid && existing().status == 'UNVALIDATED' && incoming().diff(existing()).affectedKeys().hasOnly(['visitDate', 'preamble', 'vendorsRelevant', 'updatedAt', 'status'])) ||
+                      (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'vendorsRelevant']))
+                    );
+                    
+      allow delete: if isAdmin();
+    }
+  }
+}
